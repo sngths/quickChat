@@ -14,6 +14,7 @@ const { language } = useLanguage()
     :theme="theme"
     :theme-overrides="themeOverrides"
     :locale="language"
+    :style="{ width: '1200px', height: '900px', margin: '0 auto' }"
   >
     <NaiveProvider>
       <RouterView />
