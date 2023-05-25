@@ -28,8 +28,10 @@ export const useAuthStore = defineStore('auth-store', {
   actions: {
     async getSession() {
       try {
-        const { data } = await fetchSession<SessionResponse>()
+        // const { data } = await fetchSession<SessionResponse>()
+        const data: SessionResponse = { auth: true, model: 'ChatGPTAPI' }
         this.session = { ...data }
+        this.token = 'token'
         return Promise.resolve(data)
       }
       catch (error) {
