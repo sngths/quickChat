@@ -14,6 +14,7 @@ import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
+import { initRSocket, requestResponse } from '@/socket'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -102,7 +103,7 @@ async function onConversation() {
     },
   )
   scrollToBottom()
-
+  requestResponse(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
@@ -453,6 +454,7 @@ const footerClass = computed(() => {
 
 onMounted(() => {
   scrollToBottom()
+  initRSocket()
   if (inputRef.value && !isMobile.value)
     inputRef.value?.focus()
 })
