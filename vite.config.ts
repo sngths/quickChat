@@ -1,5 +1,4 @@
 import path from 'path'
-import { Buffer } from 'buffer'
 import type { PluginOption } from 'vite'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -26,10 +25,6 @@ export default defineConfig((env) => {
   const viteEnv = loadEnv(env.mode, process.cwd()) as unknown as ImportMetaEnv
 
   return {
-    define: {
-      'global.Buffer': Buffer,
-      'window.Buffer': Buffer,
-    },
     resolve: {
       alias: {
         '@': path.resolve(process.cwd(), 'src'),
