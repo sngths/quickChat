@@ -12,7 +12,7 @@ export async function initRSocket() {
       },
       dataMimeType: 'application/json',
       metadataMimeType: 'message/x.rsocket.routing.v0',
-      keepAlive: 1000000, // avoid sending during test
+      keepAlive: 10000,
       lifetime: 100000,
     },
     transport: new WebsocketClientTransport({
