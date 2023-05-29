@@ -1,10 +1,8 @@
-/* import { Buffer } from 'buffer'
 import { RSocketConnector } from 'rsocket-core'
 import { WebsocketClientTransport } from 'rsocket-websocket-client'
 import type { Payload, RSocket } from 'rsocket-core'
 
 let rsocket: RSocket
-// const Buffer = require('buffer/').Buffer
 
 export async function initRSocket() {
   const connector = new RSocketConnector({
@@ -81,92 +79,4 @@ export async function requestStream(prompt: string): Promise<Payload | null> {
       },
     ),
   )
-} */
-
-import { RSocketClient } from 'rsocket-core'
-import {
-  BufferEncoders,
-  MESSAGE_RSOCKET_AUTHENTICATION,
-  MESSAGE_RSOCKET_COMPOSITE_METADATA,
-  MESSAGE_RSOCKET_ROUTING,
-  RSocketClient,
-  TEXT_PLAIN,
-  encodeCompositeMetadata,
-  encodeRoute,
-  encodeSimpleAuthMetadata,
-} from 'rsocket-core'
-import type { ReactiveSocket, Payload, ISubscriber, ISubscription, DuplexConnection, Frame, ConnectionStatus } from 'rsocket-types';
-import { Flowable, Signle } from 'rsocket-flowable';
-import RSocketWebSocketClient from 'rsocket-websocket-client'
-
-const maxRSocketRequestN = 2147483647
-const keepAlive = 60000
-const lifetime = 180000
-const dataMimeType = 'application/octet-stream'
-const metadataMimeType = MESSAGE_RSOCKET_COMPOSITE_METADATA.string
-const route = 'rsocket.request.stream'
-
-const clientFactory: () => RSocketClient<Buffer, Buffer> = () => new RSocketClient({
-	setup: {
-		dataMimeType,
-		keepAlive,
-		lifetime,
-		metadataMimeType,
-		payload: {
-			data: undefined,
-			metadata: encodeCompositeMetadata([
-				[TEXT_PLAIN, Buffer.from('Hello World')],
-				[MESSAGE_RSOCKET_ROUTING, encodeRoute(route)],
-				[
-					MESSAGE_RSOCKET_AUTHENTICATION,
-					encodeSimpleAuthMetadata('user', 'pass'),
-				],
-				['custom/test/metadata', Buffer.from([1, 2, 3])],
-			]),
-		},
-	},
-	transport: new RSocketWebSocketClient(
-		{
-			debug: true,
-			url: 'ws://localhost:8080/rsocket',
-			wsCreator: url => new WebSocket(url),
-		},
-		BufferEncoders,
-	),
-});
-
-
-const socket = new ReconnectableRSocket(clientFactory);
-
-
-const request = new Flowable(subscriber => {
-	socket
-		.requestStream({
-			data: Buffer.from('request-stream'),
-			metadata: encodeCompositeMetadata([
-				[TEXT_PLAIN, Buffer.from('Hello World')],
-				[MESSAGE_RSOCKET_ROUTING, encodeRoute(route)],
-				[
-					MESSAGE_RSOCKET_AUTHENTICATION,
-					encodeSimpleAuthMetadata('user', 'pass'),
-				],
-				['custom/test/metadata', Buffer.from([1, 2, 3])],
-			]),
-		})
-		.subscribe(subscriber);
-});
-
-request
-	.map()
-	.lift(actual => new ResubscribeOperator(request, actual))
-	.subscribe({
-		// eslint-disable-next-line no-console
-		onComplete: () => console.log('Request-stream completed'),
-		onError: error =>
-			console.error(`Request-stream error:${error.message}`),
-		// eslint-disable-next-line no-console
-		onNext: value => console.log('%s %s', value.data, value.metadata),
-		onSubscribe: sub => sub.request(maxRSocketRequestN),
-	});
-
-setTimeout(() => { }, 30000000);
+}

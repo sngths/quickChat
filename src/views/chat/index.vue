@@ -234,7 +234,7 @@ async function onRegenerate(index: number) {
       requestOptions: { prompt: message, options: { ...options } },
     },
   )
-
+  requestResponse(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
