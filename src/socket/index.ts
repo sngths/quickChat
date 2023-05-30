@@ -16,7 +16,7 @@ export async function initRSocket() {
       lifetime: 100000,
     },
     transport: new WebsocketClientTransport({
-      url: 'ws://localhost:8081',
+      url: 'ws://localhost:8090',
       wsCreator: url => new WebSocket(url) as any,
     }),
   })
@@ -62,15 +62,14 @@ export async function requestStream(prompt: string): Promise<Payload | null> {
   return new Promise((resolve, reject) =>
     rsocket.requestStream(
       {
-        data: Buffer.from(prompt),
+        data: Buffer.from(`prompt:${prompt}`),
       },
-      1,
+      5000,
       {
         onError: e => reject(e),
         onNext: (payload, isComplete) => {
           // eslint-disable-next-line no-console
           console.log(`payload[data: ${payload.data}, metadata: ${payload.metadata}]|${isComplete}`)
-          resolve(payload)
         },
         onComplete: () => {
           resolve(null)

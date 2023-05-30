@@ -14,7 +14,7 @@ import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
-import { initRSocket, requestResponse } from '@/socket'
+import { initRSocket, requestResponse, requestStream } from '@/socket'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -103,7 +103,7 @@ async function onConversation() {
     },
   )
   scrollToBottom()
-  requestResponse(message)
+  requestStream(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
@@ -234,7 +234,7 @@ async function onRegenerate(index: number) {
       requestOptions: { prompt: message, options: { ...options } },
     },
   )
-  requestResponse(message)
+  await requestStream(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
