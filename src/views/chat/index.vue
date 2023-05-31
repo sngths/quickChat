@@ -14,7 +14,7 @@ import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
-import { initRSocket, requestResponse, requestStream } from '@/socket'
+import { initRSocket, requestChatStream, requestStream } from '@/socket'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -54,7 +54,143 @@ dataSources.value.forEach((item, index) => {
 })
 
 function handleSubmit() {
-  onConversation()
+  onConversation1()
+}
+
+async function onConversation1() {
+  const message = prompt.value
+
+  if (loading.value)
+    return
+
+  if (!message || message.trim() === '')
+    return
+
+  controller = new AbortController()
+
+  addChat(
+    +uuid,
+    {
+      dateTime: new Date().toLocaleString(),
+      text: message,
+      inversion: true,
+      error: false,
+      conversationOptions: null,
+      requestOptions: { prompt: message, options: null },
+    },
+  )
+  scrollToBottom()
+
+  loading.value = true
+  prompt.value = ''
+
+  let options: Chat.ConversationRequest = {}
+  const lastContext = conversationList.value[conversationList.value.length - 1]?.conversationOptions
+
+  if (lastContext && usingContext.value)
+    options = { ...lastContext }
+
+  addChat(
+    +uuid,
+    {
+      dateTime: new Date().toLocaleString(),
+      text: '',
+      loading: true,
+      inversion: false,
+      error: false,
+      conversationOptions: null,
+      requestOptions: { prompt: message, options: { ...options } },
+    },
+  )
+  scrollToBottom()
+  // requestStream(message)
+  try {
+    let text = ''
+    const fetchChatAPIOnce = async () => {
+      await requestChatStream(message, {
+        onMessage: (data) => {
+          try {
+            const responseMessage = JSON.parse(data)
+            text = text + (responseMessage.delta ?? '')
+            updateChat(
+              +uuid,
+              dataSources.value.length - 1,
+              {
+                dateTime: new Date().toLocaleString(),
+                text: text ?? '',
+                inversion: false,
+                error: false,
+                loading: true,
+                conversationOptions: { conversationId: responseMessage.conversationId, parentMessageId: responseMessage.id },
+                requestOptions: { prompt: message, options: { ...options } },
+              },
+            )
+            scrollToBottomIfAtBottom()
+          }
+          catch (error) {
+
+          }
+        },
+        onError: (error) => {
+          // eslint-disable-next-line no-console
+          console.log(error)
+        },
+        onComplete(): void {
+          updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+        },
+      })
+    }
+
+    await fetchChatAPIOnce()
+  }
+  catch (error: any) {
+    const errorMessage = error?.message ?? t('common.wrong')
+
+    if (error.message === 'canceled') {
+      updateChatSome(
+        +uuid,
+        dataSources.value.length - 1,
+        {
+          loading: false,
+        },
+      )
+      scrollToBottomIfAtBottom()
+      return
+    }
+
+    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
+
+    if (currentChat?.text && currentChat.text !== '') {
+      updateChatSome(
+        +uuid,
+        dataSources.value.length - 1,
+        {
+          text: `${currentChat.text}\n[${errorMessage}]`,
+          error: false,
+          loading: false,
+        },
+      )
+      return
+    }
+
+    updateChat(
+      +uuid,
+      dataSources.value.length - 1,
+      {
+        dateTime: new Date().toLocaleString(),
+        text: errorMessage,
+        inversion: false,
+        error: true,
+        loading: false,
+        conversationOptions: null,
+        requestOptions: { prompt: message, options: { ...options } },
+      },
+    )
+    scrollToBottomIfAtBottom()
+  }
+  finally {
+    loading.value = false
+  }
 }
 
 async function onConversation() {
@@ -103,7 +239,6 @@ async function onConversation() {
     },
   )
   scrollToBottom()
-  requestStream(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
@@ -234,7 +369,6 @@ async function onRegenerate(index: number) {
       requestOptions: { prompt: message, options: { ...options } },
     },
   )
-  await requestStream(message)
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {

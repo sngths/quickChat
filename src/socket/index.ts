@@ -4,6 +4,11 @@ import type { Payload, RSocket } from 'rsocket-core'
 
 let rsocket: RSocket
 
+interface MessageListener {
+  onMessage: (message: string) => void
+  onComplete: () => void
+  onError: (error: Error) => void
+}
 export async function initRSocket() {
   const connector = new RSocketConnector({
     setup: {
@@ -77,5 +82,31 @@ export async function requestStream(prompt: string): Promise<Payload | null> {
         onExtension: () => {},
       },
     ),
+  )
+}
+
+export async function requestChatStream(prompt: string, listener: MessageListener) {
+  rsocket.requestStream(
+    {
+      data: Buffer.from(`prompt:${prompt}`),
+    },
+    5000,
+    {
+      onError: e => listener.onError(e),
+      onNext: (payload, isComplete) => {
+        const msg = payload.data
+        if (msg instanceof Buffer) {
+          const msgStr = msg.toString('utf-8')
+          if (msgStr.length > 0)
+            listener.onMessage(msgStr)
+        }
+        // eslint-disable-next-line no-console
+        console.log(`payload[data: ${payload.data}, metadata: ${payload.metadata}]|${isComplete}`)
+      },
+      onComplete: () => {
+        listener.onComplete()
+      },
+      onExtension: () => {},
+    },
   )
 }
