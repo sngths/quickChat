@@ -13,7 +13,6 @@ import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
-import { fetchChatAPIProcess } from '@/api'
 import { initRSocket, requestChatStream } from '@/socket'
 import { t } from '@/locales'
 
@@ -54,10 +53,10 @@ dataSources.value.forEach((item, index) => {
 })
 
 function handleSubmit() {
-  onConversation1()
+  onConversation()
 }
 
-async function onConversation1() {
+async function onConversation() {
   const message = prompt.value
 
   if (loading.value)
@@ -193,7 +192,7 @@ async function onConversation1() {
   }
 }
 
-async function onRegenerate1(index: number) {
+async function onRegenerate(index: number) {
   if (loading.value)
     return
 
@@ -475,7 +474,7 @@ onUnmounted(() => {
                 :inversion="item.inversion"
                 :error="item.error"
                 :loading="item.loading"
-                @regenerate="onRegenerate1(index)"
+                @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />
               <div class="sticky bottom-0 left-0 flex justify-center">
