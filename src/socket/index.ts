@@ -21,7 +21,7 @@ export async function initRSocket() {
       lifetime: 100000,
     },
     transport: new WebsocketClientTransport({
-      url: 'wss://proto.ringing.site',
+      url: 'wss://proto.tianxing.site',
       wsCreator: url => new WebSocket(url) as any,
     }),
   })
