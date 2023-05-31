@@ -14,7 +14,7 @@ import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
-import { initRSocket, requestChatStream, requestStream } from '@/socket'
+import { initRSocket, requestChatStream } from '@/socket'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -339,6 +339,107 @@ async function onConversation() {
   }
 }
 
+async function onRegenerate1(index: number) {
+  if (loading.value)
+    return
+
+  controller = new AbortController()
+
+  const { requestOptions } = dataSources.value[index]
+
+  const message = requestOptions?.prompt ?? ''
+
+  let options: Chat.ConversationRequest = {}
+
+  if (requestOptions.options)
+    options = { ...requestOptions.options }
+
+  loading.value = true
+
+  updateChat(
+    +uuid,
+    index,
+    {
+      dateTime: new Date().toLocaleString(),
+      text: '',
+      inversion: false,
+      error: false,
+      loading: true,
+      conversationOptions: null,
+      requestOptions: { prompt: message, options: { ...options } },
+    },
+  )
+  try {
+    let text = ''
+    const fetchChatAPIOnce = async () => {
+      await requestChatStream(message, {
+        onMessage: (data) => {
+          try {
+            const responseMessage = JSON.parse(data)
+            text = text + (responseMessage.delta ?? '')
+            updateChat(
+              +uuid,
+              dataSources.value.length - 1,
+              {
+                dateTime: new Date().toLocaleString(),
+                text: text ?? '',
+                inversion: false,
+                error: false,
+                loading: true,
+                conversationOptions: { conversationId: responseMessage.conversationId, parentMessageId: responseMessage.id },
+                requestOptions: { prompt: message, options: { ...options } },
+              },
+            )
+            scrollToBottomIfAtBottom()
+          }
+          catch (error) {
+
+          }
+        },
+        onError: (error) => {
+          // eslint-disable-next-line no-console
+          console.log(error)
+        },
+        onComplete(): void {
+          updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+        },
+      })
+    }
+    await fetchChatAPIOnce()
+  }
+  catch (error: any) {
+    if (error.message === 'canceled') {
+      updateChatSome(
+        +uuid,
+        index,
+        {
+          loading: false,
+        },
+      )
+      return
+    }
+
+    const errorMessage = error?.message ?? t('common.wrong')
+
+    updateChat(
+      +uuid,
+      index,
+      {
+        dateTime: new Date().toLocaleString(),
+        text: errorMessage,
+        inversion: false,
+        error: true,
+        loading: false,
+        conversationOptions: null,
+        requestOptions: { prompt: message, options: { ...options } },
+      },
+    )
+  }
+  finally {
+    loading.value = false
+  }
+}
+
 async function onRegenerate(index: number) {
   if (loading.value)
     return
@@ -630,7 +731,7 @@ onUnmounted(() => {
                 :inversion="item.inversion"
                 :error="item.error"
                 :loading="item.loading"
-                @regenerate="onRegenerate(index)"
+                @regenerate="onRegenerate1(index)"
                 @delete="handleDelete(index)"
               />
               <div class="sticky bottom-0 left-0 flex justify-center">
