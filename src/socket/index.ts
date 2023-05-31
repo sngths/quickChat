@@ -110,3 +110,101 @@ export async function requestChatStream(prompt: string, listener: MessageListene
     },
   )
 }
+
+// 获取配置
+export async function requestConfig1(): Promise<any> {
+  return new Promise((resolve, reject) =>
+    rsocket.requestResponse(
+      { data: Buffer.from('config') },
+      {
+        onError: e => reject(e),
+        onNext: (payload, isComplete) => {
+          const msg = payload.data
+          if (msg instanceof Buffer) {
+            const msgStr = msg.toString('utf-8')
+            if (msgStr.length > 0)
+              resolve(JSON.parse(msgStr))
+          }
+        },
+        onComplete: () => {
+        },
+        onExtension: () => {},
+      },
+    ),
+  )
+}
+
+export async function requestConfig(onComplete: (data: any) => void) {
+  await rsocket.requestResponse(
+    { data: Buffer.from('config') },
+    {
+      onError: (e) => {
+        console.error(e)
+      },
+      onNext: (payload, isComplete) => {
+        const msg = payload.data
+        if (msg instanceof Buffer) {
+          const msgStr = msg.toString('utf-8')
+          if (msgStr.length > 0)
+            onComplete(JSON.parse(msgStr))
+        }
+      },
+      onComplete: () => {
+      },
+      onExtension: () => {
+      },
+    },
+  )
+}
+
+export async function requestSession() {
+  let text = ''
+  await rsocket.requestResponse(
+    { data: Buffer.from('session') },
+    {
+      onError: (e) => {
+        text = e.message
+        console.error(e)
+      },
+      onNext: (payload, isComplete) => {
+        const msg = payload.data
+        if (msg instanceof Buffer) {
+          const msgStr = msg.toString('utf-8')
+          if (msgStr.length > 0)
+            text = msgStr
+        }
+      },
+      onComplete: () => {
+      },
+      onExtension: () => {
+      },
+    },
+  )
+  return JSON.parse(text)
+}
+
+export async function requestVerify() {
+  let text = ''
+  await rsocket.requestResponse(
+    { data: Buffer.from('verify') },
+    {
+      onError: (e) => {
+        text = e.message
+        console.error(e)
+      },
+      onNext: (payload, isComplete) => {
+        const msg = payload.data
+        if (msg instanceof Buffer) {
+          const msgStr = msg.toString('utf-8')
+          if (msgStr.length > 0)
+            text = msgStr
+        }
+      },
+      onComplete: () => {
+      },
+      onExtension: () => {
+      },
+    },
+  )
+  return JSON.parse(text)
+}

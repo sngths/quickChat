@@ -4,8 +4,9 @@ import { NSpin } from 'naive-ui'
 import { fetchChatConfig } from '@/api'
 import pkg from '@/../package.json'
 import { useAuthStore } from '@/store'
+import { requestConfig } from '@/socket'
 
-interface ConfigState {
+export interface ConfigState {
   timeoutMs?: number
   reverseProxy?: string
   apiModel?: string
@@ -25,8 +26,11 @@ const isChatGPTAPI = computed<boolean>(() => !!authStore.isChatGPTAPI)
 async function fetchConfig() {
   try {
     loading.value = true
-    const { data } = await fetchChatConfig<ConfigState>()
-    config.value = data
+    // const { data } = await fetchChatConfig<ConfigState>()
+    await requestConfig((data) => {
+      config.value = data.data
+    })
+    // config.value = data
   }
   finally {
     loading.value = false
