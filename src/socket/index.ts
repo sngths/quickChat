@@ -3,6 +3,8 @@ import { WebsocketClientTransport } from 'rsocket-websocket-client'
 import type { Payload, RSocket } from 'rsocket-core'
 
 let rsocket: RSocket
+// 网络是否连接
+export const isOnline = () => navigator.onLine
 
 interface MessageListener {
   onMessage: (message: string) => void
@@ -10,6 +12,13 @@ interface MessageListener {
   onError: (error: Error) => void
 }
 export async function initRSocket() {
+  window.addEventListener('online', () => {
+    console.log('已连接网络')
+  })
+
+  window.addEventListener('offline', () => {
+    console.log('未连接网络')
+  })
   const connector = new RSocketConnector({
     setup: {
       payload: {
