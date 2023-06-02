@@ -13,20 +13,39 @@ export async function initRSocket() {
   const connector = new RSocketConnector({
     setup: {
       payload: {
-        data: Buffer.from('hello'),
+        data: Buffer.from('setup'),
       },
       dataMimeType: 'application/json',
-      metadataMimeType: 'message/x.rsocket.routing.v0',
-      keepAlive: 10000,
-      lifetime: 100000,
+      metadataMimeType: 'application/octet-stream',
+      keepAlive: 30000,
+      lifetime: 180000,
     },
     transport: new WebsocketClientTransport({
       url: 'wss://proto.tianxing.site',
       wsCreator: url => new WebSocket(url) as any,
     }),
+    resume: {
+      tokenGenerator: () => Buffer.from('1'),
+      reconnectFunction: (attempt) => {
+        if (attempt === 0)
+          return new Promise(resolve => setTimeout(resolve, 100)) // 第一次立刻重连
+        else if (attempt <= 6)
+          return new Promise(resolve => setTimeout(resolve, attempt * 10 * 1000 + 100))
+        return new Promise(resolve => setTimeout(resolve, 60 * 1000 + 100))
+      },
+    },
   })
   rsocket = await connector.connect()
+  rsocket.onClose((error) => {
+    // eslint-disable-next-line no-console
+    console.log('rsocket close', error)
+  })
   return rsocket
+}
+
+// 关闭连接
+export async function closeRSocket() {
+  return rsocket.close()
 }
 
 export async function requestFireAndForget(prompt: string) {

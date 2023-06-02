@@ -13,7 +13,7 @@ import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
-import { initRSocket, requestChatStream } from '@/socket'
+import { initRSocket, requestChatStream, closeRSocket } from '@/socket'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -440,6 +440,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (loading.value)
     controller.abort()
+  closeRSocket()
 })
 </script>
 
