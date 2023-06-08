@@ -30,7 +30,7 @@ export async function initRSocket() {
       lifetime: 180000,
     },
     transport: new WebsocketClientTransport({
-      url: 'wss://proto.tianxing.site',
+      url: 'wss://proto.tianxing.site/ws',
       wsCreator: url => new WebSocket(url) as any,
     }),
     resume: {
