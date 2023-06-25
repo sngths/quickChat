@@ -97,7 +97,7 @@ export async function requestStream(prompt: string): Promise<Payload | null> {
       {
         data: Buffer.from(`prompt:${prompt}`),
       },
-      5000,
+      50000,
       {
         onError: e => reject(e),
         onNext: (payload, isComplete) => {
@@ -118,7 +118,7 @@ export async function requestChatStream(prompt: string, listener: MessageListene
     {
       data: Buffer.from(`prompt:${prompt}`),
     },
-    5000,
+    50000,
     {
       onError: e => listener.onError(e),
       onNext: (payload, isComplete) => {
